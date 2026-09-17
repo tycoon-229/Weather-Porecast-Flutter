@@ -8,7 +8,7 @@ import '../utils/weather_utils.dart';
 
 class WeatherProvider with ChangeNotifier {
   final WeatherApiService _apiService = WeatherApiService();
-  
+
   WeatherData? _weatherData;
   WeatherData? get weatherData => _weatherData;
 
@@ -61,7 +61,7 @@ class WeatherProvider with ChangeNotifier {
       }
 
       Position position = await Geolocator.getCurrentPosition();
-      
+
       List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
       String cityName = placemarks.isNotEmpty ? placemarks[0].locality ?? 'Vị trí hiện tại' : 'Vị trí hiện tại';
 
@@ -104,6 +104,32 @@ class WeatherProvider with ChangeNotifier {
       _weatherData = await _apiService.fetchWeather(location.latitude, location.longitude);
     } catch (e) {
       _error = 'Không thể tìm thấy địa điểm: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchWeatherForCoordinates(
+      double lat,
+      double lon,
+      String locationName,
+      ) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _weatherData = await _apiService.fetchWeather(lat, lon);
+
+      _selectedCity = City(
+        name: locationName,
+        latitude: lat,
+        longitude: lon,
+        country: 'VN',
+      );
+    } catch (e) {
+      _error = e.toString();
     } finally {
       _isLoading = false;
       notifyListeners();
