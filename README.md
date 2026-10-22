@@ -26,11 +26,18 @@
      - Thao tác vuốt ngang để xóa địa điểm khỏi danh sách (`Dismissible`) kèm nút Hoàn tác (Undo).
      - Tự động lưu trữ danh sách yêu thích vào bộ nhớ máy (`shared_preferences`).
 
-3. **Bản đồ Tương tác & Định vị GPS**:
+3. **Chỉ số Chất lượng Không khí (AQI) & Bụi mịn**:
+   - Tích hợp dữ liệu thời gian thực từ **Open-Meteo Air Quality API**.
+   - Cung cấp điểm **US AQI** kèm 6 cấp độ phân loại màu sắc tiêu chuẩn (*Tốt, Trung bình, Kém, Xấu, Rất xấu, Nguy hại*).
+   - Đo lường nồng độ **bụi mịn PM2.5, PM10 và khí Ozone (O₃)**.
+   - Hiển thị **khuyến cáo sức khỏe y tế** tương ứng (ví dụ: *Đeo khẩu trang lọc bụi N95, hạn chế hoạt động thể lực ngoài trời*).
+
+4. **Bản đồ Tương tác & Lớp Radar Mưa Thời gian thực (RainViewer)**:
    - Tự động định vị GPS vị trí hiện tại của người dùng qua `geolocator`.
    - Màn hình Bản đồ số vệ tinh/OpenStreetMap (`flutter_map`) hỗ trợ ghim tọa độ chính xác, tìm kiếm địa chỉ kèm lịch sử tìm kiếm gần đây.
+   - **Lớp phủ Radar Mưa trực tiếp (Live Rain Radar Layer)**: Tích hợp RainViewer Tile API cho phép bật/tắt lớp dải mây mưa đang quét qua lãnh thổ kèm bảng chú giải cường độ mưa (*Nhẹ, Vừa, Lớn, Rất lớn*).
 
-4. **Hiệu ứng Hoạt hình & Tùy biến Màu sắc Cá nhân hóa**:
+5. **Hiệu ứng Hoạt hình & Tùy biến Màu sắc Cá nhân hóa**:
    - Sử dụng thư viện `weather_animation` để hiển thị hoạt ảnh nền sống động (Nắng, Mưa, Mây, Dông sét, Tuyết...).
    - Đồng bộ màu sắc thanh `AppBar` và `BottomBar` theo trạng thái thời tiết.
    - Cho phép người dùng tùy chọn bảng màu tùy thích cho từng kiểu thời tiết qua `flutter_colorpicker`.

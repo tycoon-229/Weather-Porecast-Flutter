@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 
 import '../models/hourly_weather_model.dart';
 import '../models/weather_model.dart';
+import '../models/air_quality_model.dart';
 import '../models/city_model.dart';
 import '../providers/weather_provider.dart';
 import '../providers/settings_provider.dart';
@@ -53,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
         // Đồng bộ PageController khi index thay đổi từ bên ngoài (ví dụ từ màn hình quản lý địa điểm)
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_pageController.hasClients &&
+              _pageController.position.hasContentDimensions &&
               _pageController.page?.round() != weatherProv.selectedCityIndex) {
             _pageController.animateToPage(
               weatherProv.selectedCityIndex,
@@ -210,10 +212,6 @@ class _HomeScreenState extends State<HomeScreen> {
       customColors: settingsProv.weatherColors,
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-            child: _buildCitySelector(context, weatherProv),
-          ),
           Expanded(
             child: RefreshIndicator(
               onRefresh: () => weatherProv.refreshWeather(),
@@ -256,6 +254,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildWeatherDetails(data.current),
                     const SizedBox(height: 16),
                     _buildSunAndPrecipitationCard(data.daily),
+                    if (data.airQuality != null) ...[
+                      const SizedBox(height: 16),
+                      _buildAirQualityCard(data.airQuality!),
+                    ],
                     const SizedBox(height: 24),
                     _buildHourlyForecast(data.hourly),
                     const SizedBox(height: 24),
@@ -947,6 +949,150 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildAirQualityCard(AirQuality aqi) {
+    final status = aqi.getAqiStatus();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.25),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.air, color: status.color, size: 22),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Chất lượng không khí',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: status.color.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: status.color.withOpacity(0.6), width: 1),
+                ),
+                child: Text(
+                  status.label,
+                  style: TextStyle(
+                    color: status.color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              // Hộp điểm AQI
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: status.color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: status.color.withOpacity(0.35)),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      '${aqi.aqi}',
+                      style: TextStyle(
+                        color: status.color,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 26,
+                      ),
+                    ),
+                    const Text(
+                      'US AQI',
+                      style: TextStyle(color: Colors.white70, fontSize: 10),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              // Thông số bụi mịn PM2.5, PM10, Ozone
+              Expanded(
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Bụi mịn PM2.5', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                        Text(
+                          '${aqi.pm25.toStringAsFixed(1)} μg/m³',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Bụi PM10', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                        Text(
+                          '${aqi.pm10.toStringAsFixed(1)} μg/m³',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Ozone (O₃)', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                        Text(
+                          '${aqi.ozone.round()} μg/m³',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.info_outline, size: 16, color: status.color),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    status.advice,
+                    style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12, height: 1.3),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHourlyForecast(HourlyWeather hourlyData) {
     final DateTime now = DateTime.now();
 
@@ -1055,39 +1201,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     );
   }
-
-  void _showSearchDialog(BuildContext context) {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Tìm kiếm địa điểm'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              hintText: 'Nhập tên thành phố (ví dụ: Đà Lạt, Nha Trang...)',
-            ),
-            autofocus: true,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Hủy'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final query = controller.text.trim();
-                if (query.isNotEmpty) {
-                  context.read<WeatherProvider>().fetchWeatherForCustomLocation(query);
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('Tìm kiếm'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
+}

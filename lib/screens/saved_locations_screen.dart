@@ -57,7 +57,9 @@ class _SavedLocationsScreenState extends State<SavedLocationsScreen> {
         final prov = context.read<WeatherProvider>();
         await prov.addFavorite(newCity);
         _searchController.clear();
+        if (!mounted) return;
         FocusScope.of(context).unfocus();
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Đã thêm "$name" vào danh sách yêu thích'),
@@ -89,7 +91,7 @@ class _SavedLocationsScreenState extends State<SavedLocationsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF1E2430),
       appBar: AppBar(
-        title: const Text('Quản lý địa điểm', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Quản lý địa điểm', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         backgroundColor: const Color(0xFF1E2430),
         elevation: 0,
         actions: [

@@ -1,17 +1,39 @@
 import 'hourly_weather_model.dart';
+import 'air_quality_model.dart';
 
 class WeatherData {
   final CurrentWeather current;
   final DailyForecast daily;
   final HourlyWeather hourly;
+  final AirQuality? airQuality;
 
-  WeatherData({required this.current, required this.daily, required this.hourly});
+  WeatherData({
+    required this.current,
+    required this.daily,
+    required this.hourly,
+    this.airQuality,
+  });
 
-  factory WeatherData.fromJson(Map<String, dynamic> json) {
+  WeatherData copyWith({
+    CurrentWeather? current,
+    DailyForecast? daily,
+    HourlyWeather? hourly,
+    AirQuality? airQuality,
+  }) {
+    return WeatherData(
+      current: current ?? this.current,
+      daily: daily ?? this.daily,
+      hourly: hourly ?? this.hourly,
+      airQuality: airQuality ?? this.airQuality,
+    );
+  }
+
+  factory WeatherData.fromJson(Map<String, dynamic> json, [AirQuality? airQuality]) {
     return WeatherData(
       current: CurrentWeather.fromJson(json['current']),
       daily: DailyForecast.fromJson(json['daily']),
       hourly: HourlyWeather.fromJson(json['hourly']),
+      airQuality: airQuality,
     );
   }
 }

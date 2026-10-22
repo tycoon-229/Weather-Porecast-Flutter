@@ -3,6 +3,7 @@ import 'package:weather/utils/weather_utils.dart';
 import 'package:weather/models/weather_model.dart';
 import 'package:weather/models/hourly_weather_model.dart';
 import 'package:weather/models/city_model.dart';
+import 'package:weather/models/air_quality_model.dart';
 
 void main() {
   test('WeatherUtils returns valid UV info', () {
@@ -72,5 +73,26 @@ void main() {
     expect(parsed.longitude, 109.1897);
     expect(parsed.isCurrentLocation, true);
     expect(parsed == city, true);
+  });
+
+  test('AirQuality parses JSON and returns appropriate status', () {
+    final aqiJson = {
+      'current': {
+        'us_aqi': 125,
+        'pm2_5': 35.5,
+        'pm10': 42.0,
+        'carbon_monoxide': 400.0,
+        'nitrogen_dioxide': 12.0,
+        'ozone': 180.0,
+      }
+    };
+
+    final aqi = AirQuality.fromJson(aqiJson);
+    expect(aqi.aqi, 125);
+    expect(aqi.pm25, 35.5);
+    expect(aqi.pm10, 42.0);
+
+    final status = aqi.getAqiStatus();
+    expect(status.label, 'Kém');
   });
 }
