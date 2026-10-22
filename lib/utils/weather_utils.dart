@@ -27,6 +27,55 @@ class WeatherUtils {
     return WeatherType.sunny;
   }
 
+  static IconData getWeatherIcon(int code) {
+    if (code == 0) return Icons.wb_sunny;
+    if (code >= 1 && code <= 3) return Icons.wb_cloudy;
+    if (code >= 45 && code <= 48) return Icons.cloud;
+    if (code >= 51 && code <= 67) return Icons.water_drop;
+    if (code >= 71 && code <= 77) return Icons.ac_unit;
+    if (code >= 80 && code <= 82) return Icons.shower;
+    if (code >= 95 && code <= 99) return Icons.thunderstorm;
+    return Icons.wb_sunny;
+  }
+
+  static String getWindDirection(int degrees) {
+    final deg = (degrees % 360 + 360) % 360;
+    if (deg >= 337.5 || deg < 22.5) return 'Bắc (N)';
+    if (deg >= 22.5 && deg < 67.5) return 'Đông Bắc (NE)';
+    if (deg >= 67.5 && deg < 112.5) return 'Đông (E)';
+    if (deg >= 112.5 && deg < 157.5) return 'Đông Nam (SE)';
+    if (deg >= 157.5 && deg < 202.5) return 'Nam (S)';
+    if (deg >= 202.5 && deg < 247.5) return 'Tây Nam (SW)';
+    if (deg >= 247.5 && deg < 292.5) return 'Tây (W)';
+    return 'Tây Bắc (NW)';
+  }
+
+  static ({String label, Color color, String advice}) getUvInfo(double uv) {
+    if (uv <= 2.5) {
+      return (label: 'Thấp', color: Colors.greenAccent, advice: 'An toàn khi hoạt động ngoài trời');
+    } else if (uv <= 5.5) {
+      return (label: 'Trung bình', color: Colors.amberAccent, advice: 'Nên đeo kính râm và đội mũ');
+    } else if (uv <= 7.5) {
+      return (label: 'Cao', color: Colors.orangeAccent, advice: 'Cần bôi kem chống nắng, mặc áo che chắn');
+    } else if (uv <= 10.5) {
+      return (label: 'Rất cao', color: Colors.redAccent, advice: 'Nguy hại cao, hạn chế ra nắng lúc trưa');
+    } else {
+      return (label: 'Nguy hiểm', color: Colors.purpleAccent, advice: 'Cực kỳ nguy hiểm, tránh ra ngoài trời');
+    }
+  }
+
+  static String formatTime(String? isoString) {
+    if (isoString == null || isoString.isEmpty) return '--:--';
+    try {
+      final dt = DateTime.parse(isoString);
+      final hour = dt.hour.toString().padLeft(2, '0');
+      final minute = dt.minute.toString().padLeft(2, '0');
+      return '$hour:$minute';
+    } catch (_) {
+      return isoString;
+    }
+  }
+
   static WeatherScene getSchema(WeatherType type, Color color) {
     switch (type) {
       case WeatherType.sunny:

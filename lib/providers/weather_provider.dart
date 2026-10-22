@@ -45,6 +45,16 @@ class WeatherProvider with ChangeNotifier {
     }
   }
 
+  Future<void> refreshWeather() async {
+    try {
+      _weatherData = await _apiService.fetchWeather(_selectedCity.latitude, _selectedCity.longitude);
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      notifyListeners();
+    }
+  }
+
   Future<void> fetchWeatherForCurrentLocation() async {
     _isLoading = true;
     _error = null;

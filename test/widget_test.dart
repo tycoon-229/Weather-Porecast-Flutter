@@ -1,30 +1,56 @@
-// // This is a basic Flutter widget test.
-// //
-// // To perform an interaction with a widget in your test, use the WidgetTester
-// // utility in the flutter_test package. For example, you can send tap and scroll
-// // gestures. You can also use WidgetTester to find child widgets in the widget
-// // tree, read text, and verify that the values of widget properties are correct.
-//
-// import 'package:flutter/material.dart';
-// import 'package:flutter_test/flutter_test.dart';
-//
-// import 'package:weather/main.dart';
-//
-// void main() {
-//   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-//     // Build our app and trigger a frame.
-//     await tester.pumpWidget(const MyApp());
-//
-//     // Verify that our counter starts at 0.
-//     expect(find.text('0'), findsOneWidget);
-//     expect(find.text('1'), findsNothing);
-//
-//     // Tap the '+' icon and trigger a frame.
-//     await tester.tap(find.byIcon(Icons.add));
-//     await tester.pump();
-//
-//     // Verify that our counter has incremented.
-//     expect(find.text('0'), findsNothing);
-//     expect(find.text('1'), findsOneWidget);
-//   });
-// }
+import 'package:flutter_test/flutter_test.dart';
+import 'package:weather/utils/weather_utils.dart';
+import 'package:weather/models/weather_model.dart';
+import 'package:weather/models/hourly_weather_model.dart';
+
+void main() {
+  test('WeatherUtils returns valid UV info', () {
+    final lowUv = WeatherUtils.getUvInfo(1.5);
+    expect(lowUv.label, 'Thấp');
+
+    final highUv = WeatherUtils.getUvInfo(7.2);
+    expect(highUv.label, 'Cao');
+  });
+
+  test('WeatherData parses new Phase 1 fields correctly', () {
+    final mockJson = {
+      'current': {
+        'temperature_2m': 30.5,
+        'relative_humidity_2m': 65,
+        'apparent_temperature': 34.2,
+        'weather_code': 1,
+        'surface_pressure': 1010.5,
+        'wind_speed_10m': 12.0,
+        'wind_direction_10m': 135,
+        'uv_index': 6.5,
+      },
+      'daily': {
+        'time': ['2026-10-22'],
+        'weather_code': [1],
+        'temperature_2m_max': [33.0],
+        'temperature_2m_min': [24.0],
+        'sunrise': ['2026-10-22T05:54'],
+        'sunset': ['2026-10-22T17:27'],
+        'uv_index_max': [7.0],
+        'precipitation_probability_max': [45],
+      },
+      'hourly': {
+        'time': ['2026-10-22T14:00'],
+        'temperature_2m': [30.5],
+        'weather_code': [1],
+        'precipitation_probability': [30],
+        'uv_index': [5.0],
+      },
+    };
+
+    final weatherData = WeatherData.fromJson(mockJson);
+    expect(weatherData.current.apparentTemperature, 34.2);
+    expect(weatherData.current.uvIndex, 6.5);
+    expect(weatherData.current.surfacePressure, 1010.5);
+    expect(weatherData.current.windDirection, 135);
+    expect(weatherData.daily.sunrise.first, '2026-10-22T05:54');
+    expect(weatherData.daily.sunset.first, '2026-10-22T17:27');
+    expect(weatherData.daily.precipitationProbabilityMax.first, 45);
+    expect(weatherData.hourly.precipitationProbability.first, 30);
+  });
+}
