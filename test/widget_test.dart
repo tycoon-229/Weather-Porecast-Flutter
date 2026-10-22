@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:weather/utils/weather_utils.dart';
 import 'package:weather/models/weather_model.dart';
 import 'package:weather/models/hourly_weather_model.dart';
+import 'package:weather/models/city_model.dart';
 
 void main() {
   test('WeatherUtils returns valid UV info', () {
@@ -52,5 +53,24 @@ void main() {
     expect(weatherData.daily.sunset.first, '2026-10-22T17:27');
     expect(weatherData.daily.precipitationProbabilityMax.first, 45);
     expect(weatherData.hourly.precipitationProbability.first, 30);
+  });
+
+  test('City model serializes and deserializes correctly', () {
+    final city = City(
+      name: 'Nha Trang',
+      latitude: 12.2461,
+      longitude: 109.1897,
+      country: 'VN',
+      isCurrentLocation: true,
+    );
+
+    final jsonMap = city.toJson();
+    final parsed = City.fromJson(jsonMap);
+
+    expect(parsed.name, 'Nha Trang');
+    expect(parsed.latitude, 12.2461);
+    expect(parsed.longitude, 109.1897);
+    expect(parsed.isCurrentLocation, true);
+    expect(parsed == city, true);
   });
 }

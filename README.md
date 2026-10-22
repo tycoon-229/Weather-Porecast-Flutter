@@ -6,36 +6,34 @@
 
 ## 🌟 Các Tính năng Chính
 
-1. **Dự báo Thời tiết Thời gian thực & 7 ngày tới**:
-   - Cung cấp nhiệt độ hiện tại, trạng thái thời tiết, độ ẩm và tốc độ gió.
-   - Bảng dự báo chi tiết 7 ngày tới với giao diện thẻ nổi (Card) và các cột được căn chỉnh trực quan.
-2. **Hiệu ứng Hoạt hình Thời tiết (Weather Animation)**:
-   - Sử dụng thư viện `weather_animation` để hiển thị các hiệu ứng sinh động (Trời nắng, Nhiều mây, Mưa, Tuyết, Dông sét...) trực tiếp trên màn hình.
-   - Nội dung chi tiết thời tiết được phủ trực tiếp lên khung animation với hiệu ứng gradient mờ hiện đại.
-3. **Định vị GPS & Tìm kiếm Địa điểm**:
-   - Tự động lấy vị trí hiện tại của người dùng tại Việt Nam thông qua `geolocator`.
-   - Hỗ trợ hộp thoại tìm kiếm địa điểm/thành phố bất kỳ trên toàn quốc (sử dụng `geocoding` để tra cứu tọa độ).
-   - Danh sách các thành phố lớn tại Việt Nam có sẵn trong menu thả xuống (Dropdown).
-4. **Đồng bộ Màu sắc Thanh AppBar**:
-   - Màu nền của `AppBar` tự động đồng bộ theo màu chủ đạo của dạng thời tiết hiện tại.
-   - Tự động tính toán độ sáng tối (Contrast) để hiển thị màu chữ và icon phù hợp (Trắng/Đen).
-5. **Tùy chỉnh Màu sắc Cá nhân hóa (Settings & Color Picker)**:
-   - Cho phép người dùng tùy chỉnh màu sắc chủ đạo cho từng loại thời tiết (Nắng, Mây, Mưa, Dông...).
-   - Tích hợp bảng chọn màu chuyên nghiệp (`flutter_colorpicker`).
-   - Lưu trữ tự động với `shared_preferences` (giữ nguyên tùy chỉnh sau khi khởi động lại ứng dụng).
+1. **Dự báo Thời tiết Chuyên sâu (Thời gian thực & 7 ngày tới)**:
+   - Nhiệt độ hiện tại, **nhiệt độ cảm nhận thực tế (Feels like)**.
+   - **Chỉ số tia cực tím (UV Index)** với bảng màu cảnh báo mức độ và khuyến cáo bảo vệ da.
+   - **Tốc độ gió & Hướng gió** tự động quy đổi la bàn tiếng Việt (Bắc, Đông Bắc, Đông Nam...).
+   - **Áp suất khí quyển (hPa)** và độ ẩm không khí.
+   - **Chu kỳ Mặt trời mọc & Hoàng hôn** (Bình minh & Hoàng hôn).
+   - **Khả năng có mưa (%)** chi tiết cho từng giờ và từng ngày.
+   - Bảng dự báo 7 ngày hỗ trợ chuyển đổi linh hoạt giữa **Biểu đồ đường mượt mà (`fl_chart`)** và **Danh sách thẻ chi tiết**.
+   - Hỗ trợ thao tác **kéo để làm mới dữ liệu (Pull-to-refresh)**.
 
----
+2. **Quản lý Địa điểm Yêu thích & Trượt Đổi Thành phố (PageView)**:
+   - **Trượt ngang (Swipe)** để chuyển đổi mượt mà giữa các thành phố yêu thích tương tự Apple Weather / Google Weather.
+   - **Thanh chỉ báo trang (Dots Indicator)** ở góc dưới màn hình giúp nhận biết trang và chạm để nhảy nhanh tới thành phố mong muốn.
+   - **Nút Ngôi sao Yêu thích** ngay trên AppBar để thêm/bỏ lưu địa điểm nhanh chóng.
+   - **Màn hình Quản lý Địa điểm (`SavedLocationsScreen`)**:
+     - Xem danh sách thẻ thời tiết thời gian thực của tất cả thành phố đã lưu.
+     - Tìm kiếm và thêm nhanh thành phố mới bằng thanh tìm kiếm thông minh hoặc ghim trên bản đồ.
+     - Thao tác vuốt ngang để xóa địa điểm khỏi danh sách (`Dismissible`) kèm nút Hoàn tác (Undo).
+     - Tự động lưu trữ danh sách yêu thích vào bộ nhớ máy (`shared_preferences`).
 
-## 🛠 Công nghệ & Thư viện Sử dụng
+3. **Bản đồ Tương tác & Định vị GPS**:
+   - Tự động định vị GPS vị trí hiện tại của người dùng qua `geolocator`.
+   - Màn hình Bản đồ số vệ tinh/OpenStreetMap (`flutter_map`) hỗ trợ ghim tọa độ chính xác, tìm kiếm địa chỉ kèm lịch sử tìm kiếm gần đây.
 
-- **Framework**: Flutter (Dart)
-- **Quản lý trạng thái (State Management)**: `provider` (^6.1.2)
-- **API Thời tiết**: [Open-Meteo API](https://open-meteo.com/) (Miễn phí, không cần API Key)
-- **Hiệu ứng thời tiết**: `weather_animation` (^1.2.0)
-- **Định vị & Địa lý**: `geolocator` (^13.0.0), `geocoding` (^3.0.0)
-- **Lưu trữ cục bộ**: `shared_preferences` (^2.2.2)
-- **Chọn màu sắc**: `flutter_colorpicker` (^1.1.0)
-- **Định dạng ngày tháng**: `intl` (^0.19.0) (Hỗ trợ tiếng Việt)
+4. **Hiệu ứng Hoạt hình & Tùy biến Màu sắc Cá nhân hóa**:
+   - Sử dụng thư viện `weather_animation` để hiển thị hoạt ảnh nền sống động (Nắng, Mưa, Mây, Dông sét, Tuyết...).
+   - Đồng bộ màu sắc thanh `AppBar` và `BottomBar` theo trạng thái thời tiết.
+   - Cho phép người dùng tùy chọn bảng màu tùy thích cho từng kiểu thời tiết qua `flutter_colorpicker`.
 
 ---
 
@@ -44,10 +42,10 @@
 ```text
 lib/
 │
-├── models/             # Các mô hình dữ liệu (City, WeatherData, HourlyWeather...)
+├── models/             # Các mô hình dữ liệu (City, WeatherData, HourlyWeather, DailyForecast...)
 ├── providers/          # Quản lý trạng thái (WeatherProvider, SettingsProvider)
-├── screens/            # Các màn hình chính (HomeScreen, SettingsScreen)
-├── services/           # Kết nối API (WeatherApiService)
+├── screens/            # Các màn hình chính (HomeScreen, MapPickerScreen, SavedLocationsScreen, SettingsScreen)
+├── services/           # Kết nối Open-Meteo API (WeatherApiService)
 ├── utils/              # Tiện ích hỗ trợ & Mapping (WeatherUtils)
 ├── widgets/            # Các thành phần giao diện tái sử dụng (WeatherAnimationWrapper)
 └── main.dart           # Điểm khởi đầu ứng dụng và cấu hình Provider

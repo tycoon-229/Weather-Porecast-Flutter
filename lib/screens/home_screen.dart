@@ -5,11 +5,13 @@ import 'package:fl_chart/fl_chart.dart';
 
 import '../models/hourly_weather_model.dart';
 import '../models/weather_model.dart';
+import '../models/city_model.dart';
 import '../providers/weather_provider.dart';
 import '../providers/settings_provider.dart';
 import '../utils/weather_utils.dart';
 import '../widgets/weather_animation_wrapper.dart';
 import 'map_picker_screen.dart';
+import 'saved_locations_screen.dart';
 import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -20,43 +22,87 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Biến chuyển tab giữa "Biểu đồ" và "Danh sách"
   bool _showChartTab = true;
+  late final PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialIndex = context.read<WeatherProvider>().selectedCityIndex;
+    _pageController = PageController(initialPage: initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer2<WeatherProvider, SettingsProvider>(
       builder: (context, weatherProv, settingsProv, child) {
-        final weatherCode = weatherProv.weatherData?.current.weatherCode ?? 0;
+        final currentCity = weatherProv.selectedCity;
+        final weatherData = weatherProv.weatherData;
+        final weatherCode = weatherData?.current.weatherCode ?? 0;
         final type = WeatherUtils.getWeatherType(weatherCode);
         final appBarColor = settingsProv.weatherColors[type] ?? Colors.blue;
         final isDark = ThemeData.estimateBrightnessForColor(appBarColor) == Brightness.dark;
+        final isFav = weatherProv.isFavorite(currentCity);
+
+        // Đồng bộ PageController khi index thay đổi từ bên ngoài (ví dụ từ màn hình quản lý địa điểm)
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_pageController.hasClients &&
+              _pageController.page?.round() != weatherProv.selectedCityIndex) {
+            _pageController.animateToPage(
+              weatherProv.selectedCityIndex,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            );
+          }
+        });
 
         return Scaffold(
-          appBar: // Thay thế nút IconButton tìm kiếm trong appBar của HomeScreen:
-          AppBar(
+          appBar: AppBar(
             backgroundColor: appBarColor,
             foregroundColor: isDark ? Colors.white : Colors.black,
-            title: const Text('Thời tiết Việt Nam'),
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (currentCity.isCurrentLocation) ...[
+                  const Icon(Icons.near_me, size: 18),
+                  const SizedBox(width: 6),
+                ],
+                Flexible(
+                  child: Text(
+                    currentCity.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
+                  ),
+                ),
+              ],
+            ),
             actions: [
+              // Nút bật/tắt yêu thích
               IconButton(
-                icon: const Icon(Icons.map_outlined), // Đổi sang icon bản đồ
-                tooltip: 'Chọn vị trí trên bản đồ',
+                icon: Icon(
+                  isFav ? Icons.star : Icons.star_border,
+                  color: isFav ? Colors.amberAccent : (isDark ? Colors.white : Colors.black),
+                ),
+                tooltip: isFav ? 'Bỏ lưu yêu thích' : 'Lưu vào yêu thích',
                 onPressed: () async {
-                  // Mở màn hình bản đồ và đợi người dùng chọn vị trí
-                  final LocationResult? result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MapPickerScreen(),
-                    ),
-                  );
-
-                  // Khi người dùng bấm "Xem thời tiết tại đây"
-                  if (result != null && context.mounted) {
-                    context.read<WeatherProvider>().fetchWeatherForCoordinates(
-                      result.latitude,
-                      result.longitude,
-                      result.displayName,
+                  await weatherProv.toggleFavorite(currentCity);
+                  if (context.mounted) {
+                    final updatedFav = weatherProv.isFavorite(currentCity);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(updatedFav
+                            ? 'Đã thêm "${currentCity.name}" vào danh sách yêu thích'
+                            : 'Đã xóa "${currentCity.name}" khỏi danh sách yêu thích'),
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 2),
+                      ),
                     );
                   }
                 },
@@ -81,36 +127,83 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           body: _buildBody(context, weatherProv, settingsProv),
+          bottomNavigationBar: _buildBottomBar(context, weatherProv, appBarColor, isDark),
         );
       },
     );
   }
 
   Widget _buildBody(BuildContext context, WeatherProvider weatherProv, SettingsProvider settingsProv) {
-    if (weatherProv.isLoading) {
+    if (weatherProv.isLoading && weatherProv.weatherData == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (weatherProv.error != null) {
+    if (weatherProv.error != null && weatherProv.weatherData == null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Text(
-            'Lỗi: ${weatherProv.error}',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.red, fontSize: 16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Lỗi: ${weatherProv.error}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.red, fontSize: 16),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () => weatherProv.fetchWeatherForSelectedCity(),
+                child: const Text('Thử lại'),
+              ),
+            ],
           ),
         ),
       );
     }
 
-    final data = weatherProv.weatherData;
-    if (data == null) {
-      return const Center(child: Text('Không có dữ liệu'));
-    }
+    final cities = weatherProv.allCities;
 
+    return PageView.builder(
+      controller: _pageController,
+      itemCount: cities.length,
+      onPageChanged: (index) {
+        weatherProv.selectCityIndex(index);
+      },
+      itemBuilder: (context, index) {
+        final city = cities[index];
+        final isSelected = index == weatherProv.selectedCityIndex;
+        final data = isSelected ? weatherProv.weatherData : weatherProv.getWeatherForCity(city);
+
+        if (data == null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 12),
+                Text(
+                  'Đang tải thời tiết cho ${city.name}...',
+                  style: const TextStyle(color: Colors.white70),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return _buildCityWeatherView(context, city, data, weatherProv, settingsProv);
+      },
+    );
+  }
+
+  Widget _buildCityWeatherView(
+    BuildContext context,
+    City city,
+    WeatherData data,
+    WeatherProvider weatherProv,
+    SettingsProvider settingsProv,
+  ) {
     final type = WeatherUtils.getWeatherType(data.current.weatherCode);
-    final appBarColor = settingsProv.weatherColors[type] ?? Colors.blue;
+    final themeColor = settingsProv.weatherColors[type] ?? Colors.blue;
 
     return WeatherAnimationWrapper(
       weatherCode: data.current.weatherCode,
@@ -124,7 +217,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: () => weatherProv.refreshWeather(),
-              color: appBarColor,
+              color: themeColor,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -177,6 +270,102 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBottomBar(
+    BuildContext context,
+    WeatherProvider weatherProv,
+    Color barColor,
+    bool isDark,
+  ) {
+    final cities = weatherProv.allCities;
+    final fgColor = isDark ? Colors.white : Colors.black;
+
+    return Container(
+      color: barColor,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.map_outlined),
+              color: fgColor,
+              tooltip: 'Bản đồ chọn vị trí',
+              onPressed: () async {
+                final LocationResult? result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MapPickerScreen(),
+                  ),
+                );
+
+                if (result != null && context.mounted) {
+                  context.read<WeatherProvider>().fetchWeatherForCoordinates(
+                    result.latitude,
+                    result.longitude,
+                    result.displayName,
+                  );
+                }
+              },
+            ),
+
+            // Dấu chấm chỉ báo trang (Dots Page Indicator)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(cities.length, (dotIndex) {
+                final isCurrentDot = dotIndex == weatherProv.selectedCityIndex;
+                final isGps = cities[dotIndex].isCurrentLocation;
+
+                return GestureDetector(
+                  onTap: () {
+                    _pageController.animateToPage(
+                      dotIndex,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: isCurrentDot ? 20 : 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: isCurrentDot ? fgColor : fgColor.withOpacity(0.35),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: isGps && isCurrentDot
+                        ? Center(
+                            child: Icon(
+                              Icons.near_me,
+                              size: 7,
+                              color: isDark ? Colors.black : Colors.white,
+                            ),
+                          )
+                        : null,
+                  ),
+                );
+              }),
+            ),
+
+            IconButton(
+              icon: const Icon(Icons.format_list_bulleted),
+              color: fgColor,
+              tooltip: 'Quản lý địa điểm',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SavedLocationsScreen(),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -515,10 +704,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCitySelector(BuildContext context, WeatherProvider provider) {
-    List<String> cityNames = WeatherUtils.vietnamCities.map((c) => c.name).toList();
-    if (!cityNames.contains(provider.selectedCity.name)) {
-      cityNames.add(provider.selectedCity.name);
+    final Map<String, City> cityMap = {};
+    for (final c in provider.allCities) {
+      cityMap[c.name] = c;
     }
+    for (final c in WeatherUtils.vietnamCities) {
+      cityMap.putIfAbsent(c.name, () => c);
+    }
+    final cityNames = cityMap.keys.toList();
 
     return Card(
       elevation: 2,
@@ -527,21 +720,31 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(
-            value: provider.selectedCity.name,
+            value: cityMap.containsKey(provider.selectedCity.name)
+                ? provider.selectedCity.name
+                : cityNames.first,
             isExpanded: true,
             icon: const Icon(Icons.arrow_drop_down_circle, color: Colors.blue),
             onChanged: (value) {
-              try {
-                final city = WeatherUtils.vietnamCities.firstWhere((c) => c.name == value);
-                provider.selectCity(city);
-              } catch (_) {}
+              if (value != null && cityMap.containsKey(value)) {
+                provider.selectCity(cityMap[value]!);
+              }
             },
             items: cityNames.map((name) {
+              final isGps = cityMap[name]?.isCurrentLocation ?? false;
               return DropdownMenuItem(
                 value: name,
-                child: Text(
-                  name,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                child: Row(
+                  children: [
+                    if (isGps) ...[
+                      const Icon(Icons.near_me, size: 16, color: Colors.blue),
+                      const SizedBox(width: 6),
+                    ],
+                    Text(
+                      name,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ],
                 ),
               );
             }).toList(),
