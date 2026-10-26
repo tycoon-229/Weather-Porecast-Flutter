@@ -60,7 +60,7 @@ class WeatherApp extends StatelessWidget {
           bodySmall: TextStyle(color: Color(0xFFB0BEC5)),
         ),
         // Dialog tối
-        dialogTheme: const DialogTheme(
+        dialogTheme: const DialogThemeData(
           backgroundColor: Color(0xFF1A2535),
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
